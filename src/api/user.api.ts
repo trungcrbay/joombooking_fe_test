@@ -3,7 +3,7 @@ import { url } from "@/constant/url";
 import { SuccessResponse } from "@/types/auth.type";
 import { IUser, IUserListConfig, UserList } from "@/types/users.type";
 import { IUpdateUser } from "@/components/Modal/ModalUpdateUser/ModalUpdateUser";
-type IPostUser = Pick<IUser, "name" | "address" | "phone" | "email">;
+export type IPostUser = Pick<IUser, "name" | "address" | "phone" | "email">;
 
 export type ISearchUser = {
   [key in keyof IPostUser]: string;
@@ -31,6 +31,11 @@ export const userApi = {
   createUser(body: IPostUser) {
     return axios.post<SuccessResponse<IUser>>(url.users, body);
   },
+  createManyUsers(users: IPostUser[]) {
+    return axios.post<SuccessResponse<IUser>>(`${url.users}/bulk`, {
+      users
+    });
+  },
   updateUser(id: string, body: IUpdateUser) {
     return axios.patch<SuccessResponse<IUpdateUser>>(
       `${url.users}/${id}`,
@@ -43,7 +48,9 @@ export const userApi = {
   deleteManyUser(userId: string[]) {
     return axios.delete<SuccessResponse<IUser>>(`${url.users}`, {
       //@ts-ignore
-      userId,
+      data: {
+        userId: userId,
+      },
     });
   },
 };

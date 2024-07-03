@@ -12,6 +12,7 @@ import {
   Empty,
   Select,
   message,
+  Modal,
 } from "antd";
 import { SorterResult } from "antd/es/table/interface";
 import { Eye, Filter, Pencil, Search } from "lucide-react";
@@ -152,8 +153,6 @@ const UserTable = () => {
 
   const rowSelection = {
     onChange: (selectedRowKeys: string[], selectedRows: IUser[]) => {
-      console.log("selectedRowKeys: ", selectedRowKeys);
-      console.log("selectedRows: ", selectedRows);
       setSelectedUserId(selectedRowKeys);
       if (selectedRowKeys.length > 0) {
         setIsDeleteMany(true);
@@ -185,7 +184,6 @@ const UserTable = () => {
         email: searchTitle.email,
         phone: searchTitle.phone,
       });
-      console.log("User: ", usersData);
       if (usersData && usersData.data?.data.users) {
         setUsers(usersData.data?.data.users);
         if (searchQuery) {
@@ -196,7 +194,7 @@ const UserTable = () => {
           ...tableParams,
           pagination: {
             ...tableParams.pagination,
-            total: usersData.data.data.pagination.total,
+            total: users.length,
             showTotal: (total, range) => {
               return (
                 <div className="hidden md:block">
@@ -271,7 +269,7 @@ const UserTable = () => {
       return userApi.deleteManyUser(usersId);
     },
     onSuccess: (data) => {
-      message.success("Xóa thành công nhiều user vcl!!!");
+      message.success(data.data.message);
       console.log(data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
     },
@@ -281,8 +279,22 @@ const UserTable = () => {
   });
 
   const deleteManyUser = () => {
-    handleDeleteUsers.mutate(selectedUserId)
-  }
+    if (selectedUserId.length > 0) {
+      handleDeleteUsers.mutate(selectedUserId);
+      setIsDeleteMany(false);
+    }
+  };
+
+  const modalWarning = () => {
+    Modal.warning({
+      title: `Are you sure to delete ${selectedUserId.length} users`,
+      content: "If OK, there wouldn't be undo. Please be careful!",
+      onOk: deleteManyUser,
+      closable: true,
+      
+    });
+    
+  };
 
   return (
     <>
@@ -326,8 +338,8 @@ const UserTable = () => {
         <form className="md:w-[400px] w-full h-[100%] py-4 flex">
           <Input
             size="small"
-            className="md:w-[200px]"
-            style={{ padding: "10px 12px", borderRadius: "8px 0 0 8px" }}
+            className="md:w-[200px] "
+            style={{ padding: "10px 12px", borderRadius: "10px" }}
             placeholder="Search..."
             name={searchType}
             value={
@@ -348,14 +360,12 @@ const UserTable = () => {
         </form>
       </Flex>
 
-      <Filter className="cursor-pointer" />
-
       {isDeleteMany && (
         <Button
           size="middle"
           htmlType="button"
           danger
-          onClick={deleteManyUser}
+          onClick={modalWarning}
           className="my-4 overflow-hidden"
         >
           Delete
@@ -397,6 +407,7 @@ const UserTable = () => {
           setIsModalAddUser={setIsModalAddUser}
         />
       )}
+
     </>
   );
 };

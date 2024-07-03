@@ -3,7 +3,7 @@ import type { PopconfirmProps } from "antd";
 import { message, Popconfirm } from "antd";
 import { Trash2 } from "lucide-react";
 import { IUser } from "@/types/users.type";
-import { QueryClient, useMutation } from "@tanstack/react-query";
+import { QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { userApi } from "@/api/user.api";
 
 interface DeleteButton extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,7 +20,7 @@ const cancel: PopconfirmProps["onCancel"] = (e) => {
 };
 
 const DeleteUser = ({ dataView }: DeleteButton) => {
-  const queryClient = new QueryClient();
+  const queryClient = useQueryClient();
 
   const handleDeleteUserMutation = useMutation({
     mutationFn: () => {

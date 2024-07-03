@@ -11,7 +11,7 @@ type Props = {
 };
 const ExportData = ({ data, fileName }: Props) => {
   const dataExcel =
-    Array.isArray(data) && data?.map((item) => omit(item, ["__v"]));
+    Array.isArray(data) && data?.map((item) => omit(item, ["__v","_id"]));
   const exportToExcel = () => {
     //@ts-ignore
     const worksheet = XLSX.utils.json_to_sheet(dataExcel);
