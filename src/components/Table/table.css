@@ -1,0 +1,8 @@
+.ant-table {
+    overflow: auto;
+}
+
+.ant-pagination {
+    display        : flex !important;
+    justify-content: center !important;
+}
