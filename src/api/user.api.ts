@@ -18,22 +18,12 @@ export const userApi = {
       params,
     });
   },
-  searchUser({ name, address, email, phone }: ISearchUser) {
-    return axios.get<SuccessResponse<IUser>>(url.users, {
-      params: {
-        name,
-        address,
-        phone,
-        email,
-      },
-    });
-  },
   createUser(body: IPostUser) {
     return axios.post<SuccessResponse<IUser>>(url.users, body);
   },
   createManyUsers(users: IPostUser[]) {
     return axios.post<SuccessResponse<IUser>>(`${url.users}/bulk`, {
-      users
+      users,
     });
   },
   updateUser(id: string, body: IUpdateUser) {

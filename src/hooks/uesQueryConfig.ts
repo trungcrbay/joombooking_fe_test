@@ -9,11 +9,15 @@ const useQueryConfig = () => {
     {
       page: searchParams.get("page") || "1",
       limit: searchParams.get("limit") || 10,
-      sort_by: searchParams.get("sort_by"),
       name: searchParams.get("name"),
       phone: searchParams.get("phone"),
       email: searchParams.get("email"),
       address: searchParams.get("address"),
+      sortOrder: searchParams.get("sortOrder"),
+      sortBy: searchParams.get("sortBy"),
+      lt: searchParams.get("lt"),
+      gt: searchParams.get("gt"),
+      status: searchParams.get("status"),
     },
     isNull
   );

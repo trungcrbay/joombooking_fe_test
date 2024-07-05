@@ -1,7 +1,6 @@
 import { IUser } from "@/types/users.type";
 import React, { Dispatch, SetStateAction } from "react";
-import type { FormProps } from "antd";
-import { Button, Checkbox, Col, Form, Input, Modal, Row, message } from "antd";
+import { Button, Col, Form, Input, Modal, Row, message } from "antd";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { userApi } from "@/api/user.api";
 
@@ -10,7 +9,10 @@ type Props = {
   setIsModalAddUser: Dispatch<SetStateAction<boolean>>;
 };
 
-type IPostUser = Pick<IUser, "name" | "address" | "phone" | "email">;
+type IPostUser = Pick<
+  IUser,
+  "name" | "address" | "phone" | "email" | "status" | "age"
+>;
 
 const ModalAddUser = ({ isModalAddUser, setIsModalAddUser }: Props) => {
   const queryClient = useQueryClient();
@@ -123,6 +125,38 @@ const ModalAddUser = ({ isModalAddUser, setIsModalAddUser }: Props) => {
                 name="address"
                 label="Address"
                 rules={[{ required: true, message: "Address is required" }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={24}>
+              <Form.Item
+                name="age"
+                label="Age"
+                rules={[
+                  {
+                    message: "Age must be number!",
+                    pattern: new RegExp(/^[0-9]+$/),
+                  },
+                  { min: 1, message: "Age must be minimum 1 number." },
+                  { max: 3, message: "Age must be maximum 3 numbers." },
+                  {
+                    validator: (_, value) => {
+                      if (value < 18) {
+                        return Promise.reject(
+                          new Error("Age must be minimum 18")
+                        );
+                      }
+                      if (value > 70) {
+                        return Promise.reject(
+                          new Error("Age must be maximum 70")
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                  { required: true, message: "Age is required!" },
+                ]}
               >
                 <Input />
               </Form.Item>

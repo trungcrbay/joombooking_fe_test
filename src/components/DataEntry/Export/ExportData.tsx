@@ -20,10 +20,9 @@ const ExportData = ({ data, fileName }: Props) => {
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
-    }); //create a buffer
-    //Buffer là vùng lưu trữ dữ liệu tạm thời và thường được lưu trữ trong bộ nhớ tạm (RAM) 
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" }); //create blob from buffer
-    saveAs(blob, `${fileName}.xlsx`); //save file
+    });  
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" }); 
+    saveAs(blob, `${fileName}.xlsx`); 
   };
   return (
     <>
@@ -41,3 +40,5 @@ const ExportData = ({ data, fileName }: Props) => {
 };
 
 export default ExportData;
+
+//docs: https://medium.com/@gb.usmanumar/how-to-export-data-to-excel-xlsx-in-react-js-8f3ccccba875

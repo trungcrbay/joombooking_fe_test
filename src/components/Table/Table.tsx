@@ -9,13 +9,13 @@ import {
   Flex,
   Button,
   Input,
-  Empty,
   Select,
   message,
   Modal,
+  Badge,
+  RadioChangeEvent,
 } from "antd";
-import { SorterResult } from "antd/es/table/interface";
-import { Eye, Filter, Pencil, Search } from "lucide-react";
+import { Eye, FilterIcon, Pencil, Search } from "lucide-react";
 import React, { useState } from "react";
 import ModalViewUser from "../Modal/ModalViewUser/ModalViewUser";
 import ModalUpdateUser from "../Modal/ModalUpdateUser/ModalUpdateUser";
@@ -27,6 +27,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import DeleteUser from "../DataEntry/Delete/DeleteUser";
 import useQueryConfig from "@/hooks/uesQueryConfig";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import DrawerFilter from "../Filter/DrawerFilter";
 
 export type QueryConfig = {
   [key in keyof IUserListConfig]: string;
@@ -41,8 +42,6 @@ type ColumnsType<T> = TableProps<T>["columns"];
 
 interface TableParams {
   pagination?: TablePaginationConfig;
-  sortField?: SorterResult<any>["field"];
-  sortOrder?: SorterResult<any>["order"];
   filters?: Parameters<GetProp<TableProps, "onChange">>[1];
 }
 
@@ -55,7 +54,10 @@ const UserTable = () => {
   const [isModalAddUser, setIsModalAddUser] = useState(false);
   const [isDeleteMany, setIsDeleteMany] = useState(false);
   const [isUpdateUser, setIsUpdateUser] = useState(false);
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [selectedUserId, setSelectedUserId] = useState<string[]>([]);
+  const [value, setValue] = useState(1);
+
   const queryClient = useQueryClient();
   const [searchTitle, setSearchTitle] = useState({
     name: "",
@@ -68,7 +70,19 @@ const UserTable = () => {
   const pathname = usePathname();
   const newParams = new URLSearchParams(params.toString());
   const queryConfig = useQueryConfig();
-  const { limit, page } = queryConfig;
+  const {
+    limit,
+    page,
+    sortBy,
+    sortOrder,
+    name,
+    address,
+    email,
+    phone,
+    status,
+    gt,
+    lt,
+  } = queryConfig;
   const [tableParams, setTableParams] = useState<TableParams>({
     pagination: {
       current: Number(page),
@@ -83,6 +97,7 @@ const UserTable = () => {
     500,
     async () => {}
   ) as ISearchUser;
+
   const columns: ColumnsType<IUser> = [
     {
       title: "User id",
@@ -93,15 +108,11 @@ const UserTable = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      onFilter: (value, record) => record.name.indexOf(value as string) === 0,
-      sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
       title: "Email",
       dataIndex: "email",
       key: "email",
-      onFilter: (value, record) => record.email.indexOf(value as string) === 0,
-      sorter: (a, b) => a.email.localeCompare(b.email),
     },
     {
       title: "Phone",
@@ -112,9 +123,24 @@ const UserTable = () => {
       title: "Address",
       dataIndex: "address",
       key: "address",
-      onFilter: (value, record) =>
-        record.address.indexOf(value as string) === 0,
-      sorter: (a, b) => a.address.localeCompare(b.address),
+    },
+    {
+      title: "Age",
+      dataIndex: "age",
+      key: "age",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+      render: (text, record) => {
+        return (
+          <Badge
+            status={record.status ? "success" : "error"}
+            text={record.status ? "Active" : "Inactive"}
+          />
+        );
+      },
     },
     {
       title: "Action",
@@ -140,7 +166,6 @@ const UserTable = () => {
               className="cursor-pointer"
               onClick={() => {
                 setIsUpdateUser(true);
-                // setDataUpdate(record);
                 setDataView(record);
               }}
             />
@@ -150,6 +175,8 @@ const UserTable = () => {
       },
     },
   ];
+
+  console.log("queryConfig:", queryConfig);
 
   const rowSelection = {
     onChange: (selectedRowKeys: string[], selectedRows: IUser[]) => {
@@ -165,36 +192,16 @@ const UserTable = () => {
     }),
   };
 
-  let locale = {
-    emptyText: (
-      <div>
-        <Empty />
-      </div>
-    ),
-  };
-
-  console.log("type: ", searchType);
   const handleFetchDataUsers = async () => {
     try {
       setLoading(true);
       const usersData = await userApi.queryUser(queryConfig as IUserListConfig);
-      const searchUser = await userApi.searchUser({
-        name: searchTitle.name,
-        address: searchTitle.address,
-        email: searchTitle.email,
-        phone: searchTitle.phone,
-      });
-      if (usersData && usersData.data?.data.users) {
-        setUsers(usersData.data?.data.users);
-        if (searchQuery) {
-          setUsers(searchUser.data.data as any);
-        }
-        setLoading(false);
+      if (usersData) {
         setTableParams({
           ...tableParams,
           pagination: {
             ...tableParams.pagination,
-            total: users.length,
+            total: usersData.data.data.pagination.total,
             showTotal: (total, range) => {
               return (
                 <div className="hidden md:block">
@@ -204,10 +211,9 @@ const UserTable = () => {
             },
           },
         });
-      } else {
         setLoading(false);
-        <Empty />;
       }
+      return usersData;
     } catch (error) {
       console.error("Failed to fetch users:", error);
     }
@@ -218,35 +224,42 @@ const UserTable = () => {
       "users",
       tableParams.pagination?.current,
       tableParams.pagination?.pageSize,
-      tableParams?.sortOrder,
       tableParams?.pagination?.showTotal,
-      tableParams?.sortField,
       page,
       limit,
-      JSON.stringify(tableParams.filters),
+      sortBy,
+      status,
+      gt,
+      lt,
+      sortOrder,
+      name,
+      address,
+      email,
+      phone,
+      users,
       searchQuery,
       searchTitle,
     ],
     queryFn: handleFetchDataUsers,
   });
 
-  const handleTableChange: TableProps["onChange"] = (
-    pagination,
-    filters,
-    sorter
-  ) => {
+  const handleTableChange: TableProps["onChange"] = (pagination, filters) => {
     setTableParams({
       pagination,
       filters,
-      sortOrder: Array.isArray(sorter) ? undefined : sorter.order,
-      sortField: Array.isArray(sorter) ? undefined : sorter.field,
     });
 
     const { current, pageSize } = pagination;
 
     newParams.set("page", String(current));
     newParams.set("limit", String(pageSize));
+
     router.push(`${pathname}?${newParams.toString()}`);
+
+    setTableParams({
+      ...tableParams,
+      pagination,
+    });
 
     if (pagination.pageSize !== tableParams.pagination?.pageSize) {
       setUsers([]);
@@ -272,6 +285,7 @@ const UserTable = () => {
       message.success(data.data.message);
       console.log(data);
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      setSelectedUserId([]);
     },
     onError: (error) => {
       message.error(error.message);
@@ -291,11 +305,23 @@ const UserTable = () => {
       content: "If OK, there wouldn't be undo. Please be careful!",
       onOk: deleteManyUser,
       closable: true,
-      
     });
-    
   };
 
+  const onSubmitSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    newParams.delete("name");
+    newParams.delete("address");
+    newParams.delete("phone");
+    newParams.delete("email");
+    if (searchTitle) {
+      searchType === "name" && newParams.set("name", searchTitle.name);
+      searchType === "address" && newParams.set("address", searchTitle.address);
+      searchType === "phone" && newParams.set("phone", searchTitle.phone);
+      searchType === "email" && newParams.set("email", searchTitle.email);
+    }
+    router.replace(`${pathname}?${newParams.toString()}`);
+  };
   return (
     <>
       <h2 className="text-[20px] md:text-[28px] font-bold flex justify-center w-full">
@@ -335,11 +361,14 @@ const UserTable = () => {
           ]}
         />
 
-        <form className="md:w-[400px] w-full h-[100%] py-4 flex">
+        <form
+          className="md:w-[400px] w-full h-[100%] py-4 flex"
+          onSubmit={onSubmitSearch}
+        >
           <Input
             size="small"
             className="md:w-[200px] "
-            style={{ padding: "10px 12px", borderRadius: "10px" }}
+            style={{ padding: "10px 12px", borderRadius: "8px 0 0 8px" }}
             placeholder="Search..."
             name={searchType}
             value={
@@ -348,7 +377,6 @@ const UserTable = () => {
               searchTitle.email ||
               searchTitle.phone
             }
-            suffix={<Search />}
             onChange={(e) => {
               const { name, value } = e.target;
               setSearchTitle((prevState) => ({
@@ -357,8 +385,26 @@ const UserTable = () => {
               }));
             }}
           />
+
+          <Button
+            type="primary"
+            htmlType="submit"
+            style={{ borderRadius: "0 8px 8px 0", height: "auto" }}
+          >
+            <Search />
+          </Button>
         </form>
       </Flex>
+
+      <FilterIcon
+        className="cursor-pointer"
+        onClick={() => setIsOpenFilter(true)}
+      />
+
+      <DrawerFilter
+        isOpenFilter={isOpenFilter}
+        setIsOpenFilter={setIsOpenFilter}
+      />
 
       {isDeleteMany && (
         <Button
@@ -373,8 +419,9 @@ const UserTable = () => {
       )}
 
       <Table
-        dataSource={users}
+        dataSource={data?.data.data.users}
         columns={columns}
+        //@ts-ignore
         rowSelection={{
           type: "checkbox",
           preserveSelectedRowKeys: true,
@@ -382,7 +429,6 @@ const UserTable = () => {
         }}
         pagination={tableParams.pagination}
         loading={loading}
-        locale={locale}
         rowKey="_id"
         onChange={handleTableChange}
         className="pt-8"
@@ -407,7 +453,6 @@ const UserTable = () => {
           setIsModalAddUser={setIsModalAddUser}
         />
       )}
-
     </>
   );
 };

@@ -50,6 +50,18 @@ const ModalViewUser = ({ isViewUser, setIsViewUser, dataView }: Props) => {
               </Form.Item>
             </Col>
           </Row>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Form.Item name="age" label="Age">
+                <Input defaultValue={dataView?.age} readOnly />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="status" label="Status">
+                <Input defaultValue={`${dataView?.status ? 'Active' : 'Inactive'}`} readOnly />
+              </Form.Item>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     </>

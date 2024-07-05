@@ -69,3 +69,5 @@ const ImportData: React.FC = () => {
 };
 
 export default ImportData;
+
+//https://medium.com/@gb.usmanumar/how-to-import-data-from-excel-xlsx-in-react-js-f486a600dc9f

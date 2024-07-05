@@ -4,6 +4,8 @@ export interface IUser {
   email: string;
   phone: number | string;
   address: string;
+  status: boolean;
+  age: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +17,11 @@ export interface IUserListConfig {
   phone?: string;
   email?: string;
   address?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  gt?: number;
+  lt?: number;
+  status?: "0" | "1";
 }
 
 export interface UserList {
@@ -22,6 +29,6 @@ export interface UserList {
   pagination: {
     page: number;
     limit: number;
-    total?:number
+    total?: number;
   };
 }
